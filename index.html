@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sənə Bir Məktub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Cormorant:ital@0;1&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     BURAYI SEN DÜZENLE — Kişiselleştirme Ayarları
+     ============================================================ */
+  :root {
+    --sevgilinin-adi: "Aşkım";
+  }
+</style>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink: #f3ead8;
+    --ink-dim: #cbb98f;
+    --night: #14121f;
+    --night-2: #1c1830;
+    --plum: #2c1f3d;
+    --gold: #c9a15a;
+    --gold-bright: #e6c785;
+    --wax: #7a2331;
+  }
+
+  html, body {
+    background: var(--night);
+    color: var(--ink);
+    font-family: 'Jost', sans-serif;
+    overflow-x: hidden;
+    min-height: 100%;
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(201,161,90,0.10), transparent 55%),
+      radial-gradient(ellipse at 85% 100%, rgba(122,35,49,0.14), transparent 50%),
+      linear-gradient(180deg, #100e1a 0%, #171325 40%, #1c1830 100%);
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* subtle stars */
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  }
+  .stars span {
+    position: absolute; width: 2px; height: 2px; background: var(--ink-dim);
+    border-radius: 50%; opacity: 0.5; animation: twinkle 4s ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%,100%{opacity:.15} 50%{opacity:.7} }
+
+  /* ============ ENVELOPE SCREEN ============ */
+  #envelope-screen {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    transition: opacity 1s ease, visibility 1s ease;
+  }
+  #envelope-screen.hidden {
+    opacity: 0; visibility: hidden; pointer-events: none;
+  }
+
+  .envelope-wrap {
+    perspective: 1200px;
+    cursor: pointer;
+  }
+
+  .envelope {
+    width: min(78vw, 340px);
+    aspect-ratio: 3 / 2;
+    position: relative;
+  }
+
+  .env-body {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #efe3c8, #e3d3ac);
+    border-radius: 4px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.05);
+  }
+
+  .env-shadow-lines {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(135deg, transparent 49%, rgba(0,0,0,0.06) 50%, transparent 51%),
+      linear-gradient(-135deg, transparent 49%, rgba(0,0,0,0.06) 50%, transparent 51%);
+  }
+
+  .env-flap {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 62%;
+    background: linear-gradient(160deg, #e6d7b3, #d9c592);
+    clip-path: polygon(0 0, 100% 0, 50% 82%);
+    transform-origin: top center;
+    transform: rotateX(0deg);
+    transition: transform 1.1s cubic-bezier(.6,.05,.3,1);
+    z-index: 3;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  }
+  .envelope.open .env-flap {
+    transform: rotateX(-178deg);
+  }
+
+  .wax-seal {
+    position: absolute;
+    top: 44%; left: 50%; transform: translate(-50%, -50%);
+    width: 54px; height: 54px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #9c3346, var(--wax) 70%);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.35), inset 0 -3px 6px rgba(0,0,0,0.3);
+    z-index: 4;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: #e9c9a9;
+    font-size: 22px;
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .envelope.open .wax-seal { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+
+  .env-letter-peek {
+    position: absolute;
+    top: 6%; left: 8%; right: 8%; height: 0%;
+    background: #fbf6ea;
+    border-radius: 2px;
+    z-index: 2;
+    transition: height 1s ease .3s, top 1s ease .3s;
+  }
+  .envelope.open .env-letter-peek { height: 46%; top: -18%; }
+
+  .hint {
+    margin-top: 36px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: var(--ink-dim);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+  /* ============ LETTER SCREEN ============ */
+  #letter-screen {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; justify-content: center;
+    padding: 8vh 6vw 12vh;
+    opacity: 0;
+    transition: opacity 1.2s ease 0.4s;
+  }
+  #letter-screen.visible { opacity: 1; }
+
+  .paper {
+    max-width: 620px; width: 100%;
+    background: linear-gradient(180deg, #fbf6ea, #f6efdd);
+    color: #2b2418;
+    border-radius: 3px;
+    padding: clamp(28px, 6vw, 64px) clamp(24px, 7vw, 68px);
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.04);
+    position: relative;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--wax);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .salutation {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(28px, 6vw, 40px);
+    text-align: center;
+    color: #3a2a1f;
+    margin-bottom: 28px;
+  }
+
+  .big-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(42px, 11vw, 72px);
+    text-align: center;
+    color: #3a2a1f;
+    line-height: 1.05;
+    margin-bottom: 32px;
+  }
+
+  .letter-body {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(17px, 2.6vw, 20px);
+    line-height: 1.85;
+    color: #3a2f22;
+  }
+  .letter-body p { margin-bottom: 1.3em; }
+  .letter-body p:first-of-type::first-letter {
+    font-size: 3.4em;
+    float: left;
+    line-height: 0.8;
+    padding: 0.06em 0.08em 0 0;
+    color: var(--wax);
+    font-style: normal;
+  }
+
+  .signoff {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(18px, 3vw, 22px);
+    text-align: right;
+    margin-top: 34px;
+    color: #3a2a1f;
+  }
+
+  .divider {
+    width: 60px; height: 1px; background: var(--wax); opacity: 0.4;
+    margin: 40px auto;
+  }
+
+  /* ============ COUNTER ============ */
+  .counter-block { text-align: center; }
+  .counter-label {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--wax); opacity: 0.85; margin-bottom: 14px;
+  }
+  .counter-grid {
+    display: flex; justify-content: center; gap: clamp(10px, 3vw, 26px);
+    flex-wrap: wrap;
+  }
+  .counter-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(30px, 7vw, 46px);
+    color: #3a2a1f;
+    line-height: 1;
+  }
+  .counter-unit {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #8a7658; margin-top: 6px;
+  }
+
+  /* ============ NOTES ============ */
+  .notes-block { }
+  .notes-label {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--wax); opacity: 0.85; margin-bottom: 18px; text-align: center;
+  }
+  .note-stack { display: flex; flex-direction: column; gap: 14px; }
+  .note {
+    background: #fffdf7;
+    border-left: 3px solid var(--wax);
+    padding: 16px 20px;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 17px;
+    color: #40331f;
+    box-shadow: 0 6px 16px -8px rgba(0,0,0,0.2);
+    transform: rotate(var(--r, 0deg));
+  }
+  .note:nth-child(1){ --r: -0.6deg; }
+  .note:nth-child(2){ --r: 0.5deg; }
+  .note:nth-child(3){ --r: -0.3deg; }
+  .note:nth-child(4){ --r: 0.7deg; }
+
+  /* ============ MUSIC TOGGLE ============ */
+  .music-toggle {
+    position: fixed;
+    bottom: 22px; right: 22px;
+    z-index: 20;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--night-2);
+    border: 1px solid rgba(201,161,90,0.35);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    transition: transform .3s ease, box-shadow .3s ease;
+  }
+  .music-toggle:hover { transform: scale(1.06); }
+  .music-toggle svg { width: 20px; height: 20px; }
+  .music-toggle .bar {
+    fill: var(--gold);
+    transform-origin: bottom;
+    animation: bar-bounce 1s ease-in-out infinite;
+  }
+  .music-toggle.paused .bar { animation-play-state: paused; }
+  .bar:nth-child(1){ animation-delay: 0s; }
+  .bar:nth-child(2){ animation-delay: .18s; }
+  .bar:nth-child(3){ animation-delay: .34s; }
+  @keyframes bar-bounce { 0%,100%{ transform: scaleY(0.4);} 50%{ transform: scaleY(1);} }
+
+  .photo-frame {
+    max-width: 420px;
+    margin: 0 auto;
+    background: #fffdf8;
+    padding: 14px 14px 34px;
+    box-shadow: 0 14px 30px -14px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.04);
+    transform: rotate(-1.2deg);
+    position: relative;
+  }
+  .photo-img {
+    width: 100%; display: block; border-radius: 1px;
+    aspect-ratio: 16/9; object-fit: cover;
+    background: #eee5d0;
+  }
+  .photo-fallback {
+    display: none;
+    width: 100%; aspect-ratio: 16/9;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 16px;
+    border: 1.5px dashed #c9a15a;
+    color: #8a7658;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 15px;
+    background: #f8f2e4;
+  }
+  .photo-caption {
+    position: absolute; bottom: 8px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: #8a7658;
+  }
+
+  .music-panel { max-width: 420px; margin: 0 auto; }
+  .music-panel-label {
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--wax); opacity: 0.85; margin-bottom: 14px; text-align: center;
+  }
+  .music-fallback {
+    display: none;
+    margin-top: 10px; padding: 10px 14px;
+    border: 1.5px dashed #c9a15a;
+    color: #8a7658; background: #f8f2e4;
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 14px; text-align: center;
+  }
+  .music-link {
+    text-align: center; margin-top: 10px;
+  }
+  .music-link a {
+    font-size: 12px; color: var(--wax); text-decoration: none;
+    letter-spacing: 0.04em; border-bottom: 1px solid rgba(122,35,49,0.35);
+    padding-bottom: 1px;
+  }
+
+  .footer-note {
+    text-align: center; font-size: 11px; color: var(--ink-dim);
+    letter-spacing: 0.08em; margin-top: 34px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<!-- ENVELOPE INTRO -->
+<div id="envelope-screen">
+  <div class="envelope-wrap" id="envelopeWrap">
+    <div class="envelope" id="envelope">
+      <div class="env-body"></div>
+      <div class="env-letter-peek"></div>
+      <div class="env-shadow-lines"></div>
+      <div class="env-flap"></div>
+      <div class="wax-seal">S</div>
+    </div>
+  </div>
+  <div class="hint">Açmaq üçün toxun</div>
+</div>
+
+<!-- LETTER -->
+<div id="letter-screen">
+  <div class="paper">
+    <div class="eyebrow">Sənə</div>
+    <div class="big-name">Balımm 🤍🤍</div>
+
+    <div class="letter-body" id="letterBody">
+      <!-- ============================================================
+           BURANI SƏN DÜZƏLT — İstəsən sözləri dəyişə bilərsən.
+           ============================================================ -->
+      <p>Balımm səni çox sevirəm, hər şeydən hamıdan çox sevirəm. Sən bunu oxuyanda mən 4-5-ci yuxumda olacam, yuxuda səni görəcəm. 8 aydı girmisən ömrümə, hər saat yazırsan, hər dəqiqə yazırsan. Ümid edirəm həmişə belə ömrümə girərsən, paz olarsan. Səni çox sevirəmmm, toppuş sevgilimmm 🤍🤍</p>
+    </div>
+
+    <div class="signoff">Səni çox sevən sevgilin</div>
+
+    <div class="divider"></div>
+
+    <!-- PHOTO -->
+    <!-- ============================================================
+         BURANI SƏN DÜZƏLT — Şəklini əlavə edəndə "foto.jpg" yerinə
+         öz şəklinin fayl adını yaz (məs: "biz.jpg") və şəkli bu HTML
+         faylı ilə eyni qovluğa qoy.
+         ============================================================ -->
+    <div class="photo-frame">
+      <img src="foto.jpg" alt="Bizim şəklimiz" class="photo-img"
+           onerror="this.style.display='none'; document.getElementById('photoFallback').style.display='flex';">
+      <div class="photo-fallback" id="photoFallback">Şəklini bura sən əlavə et 🤍</div>
+      <div class="photo-caption">bizim anımız</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- MUSIC -->
+    <!-- ============================================================
+         BURANI SƏN DÜZƏLT — "mahni.mp3" yerinə öz mahnı faylının adını
+         yaz və faylı bu HTML ilə eyni qovluğa qoy. (Iframe embed fayl
+         birbaşa açılanda bəzən yüklənmir, ona görə bu üsul daha etibarlıdır)
+         ============================================================ -->
+    <div class="music-panel">
+      <audio controls autoplay style="width:100%" id="songPlayer">
+        <source src="mahni.mp3#t=50" type="audio/mpeg">
+      </audio>
+      <div class="music-fallback" id="musicFallback">Mahnı faylını bura sən əlavə et (mahni.mp3)</div>
+      <div class="music-link"><a href="https://open.spotify.com/track/0TuD1UPKYa0Cz7dbd5590X" target="_blank" rel="noopener">Spotify-da dinlə →</a></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- COUNTER -->
+    <div class="counter-block">
+      <div class="counter-label">Bir yerdə keçirdiyimiz vaxt</div>
+      <div class="counter-grid" id="counterGrid">
+        <div><div class="counter-num" id="c-days">0</div><div class="counter-unit">gün</div></div>
+        <div><div class="counter-num" id="c-hours">0</div><div class="counter-unit">saat</div></div>
+        <div><div class="counter-num" id="c-mins">0</div><div class="counter-unit">dəqiqə</div></div>
+        <div><div class="counter-num" id="c-secs">0</div><div class="counter-unit">saniyə</div></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+
+  </div>
+</div>
+
+
+
+<script>
+/* ============================================================
+   BURANI SƏN DÜZƏLT — Ayarlar
+   ============================================================ */
+const CONFIG = {
+  // Sevgili olduğunuz tarix (İl, Ay-1, Gün, Saat, Dəqiqə)
+  // DİQQƏT: Ay 0-dan başlayır! Yanvar=0, Fevral=1 ... Oktyabr=9, Dekabr=11
+  // Aşağıda il olaraq 2024 yazılıb — öz ilinizi bura yaz (2023, 2024, 2025 və s.)
+  startDate: new Date(2025, 9, 12, 0, 0), // 12 Oktyabr
+
+  sevgilininAdi: "Canım",   // ekranda görünəcək ad
+  gonderenAdi: "Mən"        // imza qismində görünəcək ad
+};
+
+
+/* stars */
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 60; i++) {
+  const s = document.createElement('span');
+  s.style.left = Math.random() * 100 + 'vw';
+  s.style.top = Math.random() * 100 + 'vh';
+  s.style.animationDelay = (Math.random() * 4) + 's';
+  starsEl.appendChild(s);
+}
+
+/* envelope open */
+const envelope = document.getElementById('envelope');
+const envelopeScreen = document.getElementById('envelope-screen');
+const letterScreen = document.getElementById('letter-screen');
+let opened = false;
+
+document.getElementById('envelopeWrap').addEventListener('click', () => {
+  if (opened) return;
+  opened = true;
+  envelope.classList.add('open');
+  setTimeout(() => {
+    envelopeScreen.classList.add('hidden');
+    letterScreen.classList.add('visible');
+    const sp = document.getElementById('songPlayer');
+    if (sp) { sp.play().catch(() => {}); }
+  }, 900);
+});
+
+/* counter */
+function updateCounter() {
+  const now = new Date();
+  let diff = now - CONFIG.startDate;
+  if (diff < 0) diff = 0;
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  const secs = Math.floor((diff % 60000) / 1000);
+  document.getElementById('c-days').textContent = days;
+  document.getElementById('c-hours').textContent = hours;
+  document.getElementById('c-mins').textContent = mins;
+  document.getElementById('c-secs').textContent = secs;
+}
+updateCounter();
+setInterval(updateCounter, 1000);
+
+/* Musiqi artıq mahni.mp3 faylı ilə çalınır (fayl olmasa xəbərdarlıq göstərilir) */
+const songPlayer = document.getElementById('songPlayer');
+if (songPlayer) {
+  songPlayer.addEventListener('error', () => {
+    document.getElementById('musicFallback').style.display = 'block';
+  }, true);
+  // Mahnı 50-ci saniyədən başlasın
+  songPlayer.addEventListener('loadedmetadata', () => {
+    songPlayer.currentTime = 50;
+  });
+}
+</script>
+</body>
+</html>
